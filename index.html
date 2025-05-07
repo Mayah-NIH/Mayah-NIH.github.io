@@ -15,7 +15,6 @@
   <p>Select unit:
     <select id="unit">
       <option value="mg/dl">mg/dL</option>
-      <option value="mmol/l">mmol/L</option>
     </select>
   </p>
 
@@ -68,12 +67,7 @@
               m3sldlc = m3SLDLC(TC, HDL, TG);
               esldl = eS_LDL(TC, HDL, TG, ApoB);
               fldlc = FLDLC(TC, HDL, TG);
-            } else {
-              sldlc = SLDLC_mmol(TC, HDL, TG);
-              m3sldlc = m3SLDLC_mmol(TC, HDL, TG);
-              esldl = eS_LDL_mmol(TC, HDL, TG, ApoB);
-              fldlc = FLDLC_mmol(TC, HDL, TG);
-            }
+            } 
           } catch (error) {
             console.error("Calculation error:", error);
           }
