@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LDL Calculator</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- use xlsx.full.min.js from version 0.20.3 -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <h1>LDL Cholesterol Calculator</h1>
+
+  <input type="file" id="upload" accept=".xlsx">
+  <p>Select unit:
+    <select id="unit">
+      <option value="mg/dl">mg/dL</option>
+      <option value="mmol/l">mmol/L</option>
+    </select>
+  </p>
+
+  <table id="resultsTable">
+    <thead>
+      <tr>
+        <th>Patient ID</th>
+        <th>TC</th>
+        <th>HDL</th>
+        <th>TG</th>
+        <th>ApoB</th>
+        <th>SLDLC</th>
+        <th>m3SLDLC</th>
+        <th>eS_LDL</th>
+        <th>FLDLC</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="ldl_calculator.js"></script>
+  <script>
+    document.getElementById("upload").addEventListener("change", function (e) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function (e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet);
+        const tableBody = document.querySelector("#resultsTable tbody");
+        const unit = document.getElementById("unit").value;
+        tableBody.innerHTML = "";
+
+        rows.forEach((row, i) => {
+          const TC = parseFloat(row.TC);
+          const HDL = parseFloat(row.HDL || row.HDLC);
+          const TG = parseFloat(row.TG);
+          const ApoB = parseFloat(row.ApoB);
+          const patientID = row.PatientID || `Patient ${i + 1}`;
+
+          const rowElement = document.createElement("tr");
+
+          let sldlc = '', m3sldlc = '', esldl = '', fldlc = '';
+          try {
+            if (unit === "mg/dl") {
+              sldlc = SLDLC(TC, HDL, TG);
+              m3sldlc = m3SLDLC(TC, HDL, TG);
+              esldl = eS_LDL(TC, HDL, TG, ApoB);
+              fldlc = FLDLC(TC, HDL, TG);
+            } else {
+              sldlc = SLDLC_mmol(TC, HDL, TG);
+              m3sldlc = m3SLDLC_mmol(TC, HDL, TG);
+              esldl = eS_LDL_mmol(TC, HDL, TG, ApoB);
+              fldlc = FLDLC_mmol(TC, HDL, TG);
+            }
+          } catch (error) {
+            console.error("Calculation error:", error);
+          }
+
+          rowElement.innerHTML = `
+            <td>${patientID}</td>
+            <td>${TC || ''}</td>
+            <td>${HDL || ''}</td>
+            <td>${TG || ''}</td>
+            <td>${ApoB || ''}</td>
+            <td>${sldlc}</td>
+            <td>${m3sldlc}</td>
+            <td>${esldl}</td>
+            <td>${fldlc}</td>
+          `;
+          tableBody.appendChild(rowElement);
+        });
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  </script>
+</body>
+</html>
